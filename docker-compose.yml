@@ -2,9 +2,9 @@ version: "3.8"
    
 services:
     server:
+        container_name: server
         build:
           context: ./server
-        container_name: server
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - ./server:/usr/src/app/
@@ -13,43 +13,45 @@ services:
         environment:
             - DEBUG=1
             - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
-            - CELERY_BROKER=redis://redis:6379/0
-            - CELERY_BACKEND=django-db
+            - CELERY_BROKER=amqp://rabbitmq
         depends_on:
             - db
             - redis
-    worker:
-        build:
-          context: ./worker
-        container_name: worker
-        command: python manage.py runserver 0.0.0.0:8001
-        volumes:
-            - ./worker/:/usr/src/app/
-        ports:
-            - "8001:8001"
-        environment:
-            - DEBUG=1
-            - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
-            - CELERY_BROKER='amqp://rabbitmq'
-        depends_on:
-            - db
-            - redis
-    celery:
+            - rabbitmq
+    worker-one:
+        container_name: worker-one
         restart: always
         build:
-          context: ./worker
+          context: ./server
         command: python manage.py celery
         volumes:
-            - ./worker:/usr/src/app
+            - ./server:/usr/src/app
         environment:
             - DEBUG=1
             - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
-            - CELERY_BROKER=redis://redis:6379/0
-            - CELERY_BACKEND=redis://redis:6379/0
+            - CELERY_BROKER=amqp://rabbitmq
         depends_on:
-            - worker
-            - redis
+            - server
             - db
+            - rabbitmq
+            - redis
+    worker-two:
+        container_name: worker-two
+        restart: always
+        build:
+          context: ./server
+        command: python manage.py celery
+        volumes:
+            - ./server:/usr/src/app
+        environment:
+            - DEBUG=1
+            - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+            - CELERY_BROKER=amqp://rabbitmq
+        depends_on:
+            - server
+            - db
+            - rabbitmq
+            - redis
     db:
         image: postgres
         container_name: db
