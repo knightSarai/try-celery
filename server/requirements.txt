@@ -9,12 +9,14 @@ click-plugins==1.1.1
 click-repl==0.2.0
 Deprecated==1.2.13
 Django==4.1.2
+django-celery-results==2.4.0
 flower==1.2.0
 humanize==4.4.0
 kombu==5.2.4
 packaging==21.3
 prometheus-client==0.15.0
 prompt-toolkit==3.0.31
+psycopg2==2.9.4
 pyparsing==3.0.9
 pytz==2022.5
 redis==4.3.4

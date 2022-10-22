@@ -1,12 +1,13 @@
 version: "3.8"
    
 services:
-    django:
-        build: .
-        container_name: django
+    server:
+        build:
+          context: ./server
+        container_name: server
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
-            - .:/usr/src/app/
+            - ./server:/usr/src/app/
         ports:
             - "8000:8000"
         environment:
@@ -15,32 +16,60 @@ services:
             - CELERY_BROKER=redis://redis:6379/0
             - CELERY_BACKEND=redis://redis:6379/0
         depends_on:
-            - pgdb
+            - db
             - redis
-    celery:
-        build: .
-        command: celery -A core worker -l INFO
+    worker:
+        build:
+          context: ./worker
+        container_name: worker
+        command: python manage.py runserver 0.0.0.0:8001
         volumes:
-            - .:/usr/src/app
+            - ./worker/:/usr/src/app/
+        ports:
+            - "8001:8001"
         environment:
             - DEBUG=1
             - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
             - CELERY_BROKER=redis://redis:6379/0
             - CELERY_BACKEND=redis://redis:6379/0
         depends_on:
-            - django
+            - db
             - redis
-    pgdb:
+    celery:
+        restart: always
+        build:
+          context: ./worker
+        command: python manage.py celery
+        volumes:
+            - ./worker:/usr/src/app
+        environment:
+            - DEBUG=1
+            - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+            - CELERY_BROKER=redis://redis:6379/0
+            - CELERY_BACKEND=redis://redis:6379/0
+        depends_on:
+            - worker
+            - redis
+            - db
+    db:
         image: postgres
-        container_name: pgdb
+        container_name: db
         environment:
             - POSTGRES_DB=postgres
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
         volumes:
-            - pgdata:/var/lib/postgresql/data/
+            - ./pgdata/db:/var/lib/postgresql/data/
     redis:
         image: "redis:alpine"
+    server-migrations:
+      build:
+        context: ./server
+      command: python manage.py migrate
+      volumes:
+          - ./server:/usr/src/app
+      depends_on:
+        - db
         
 volumes:
     pgdata:
