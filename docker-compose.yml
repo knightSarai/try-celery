@@ -14,7 +14,7 @@ services:
             - DEBUG=1
             - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
             - CELERY_BROKER=redis://redis:6379/0
-            - CELERY_BACKEND=redis://redis:6379/0
+            - CELERY_BACKEND=django-db
         depends_on:
             - db
             - redis
@@ -30,8 +30,7 @@ services:
         environment:
             - DEBUG=1
             - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
-            - CELERY_BROKER=redis://redis:6379/0
-            - CELERY_BACKEND=redis://redis:6379/0
+            - CELERY_BROKER='amqp://rabbitmq'
         depends_on:
             - db
             - redis
@@ -62,6 +61,12 @@ services:
             - ./pgdata/db:/var/lib/postgresql/data/
     redis:
         image: "redis:alpine"
+    rabbitmq:
+      container_name: rabbitmq
+      restart: always
+      image: rabbitmq:3.10-alpine
+      volumes:
+        - ./rabbitmq_data:/var/lib/rabbitmq
     server-migrations:
       build:
         context: ./server
@@ -73,3 +78,4 @@ services:
         
 volumes:
     pgdata:
+    rabbitmq_data:
