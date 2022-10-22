@@ -77,7 +77,20 @@ services:
           - ./server:/usr/src/app
       depends_on:
         - db
+    client:
+      build: ./client
+      command: sh -c "npm start"
+      ports:
+        - 4200:4200
+      working_dir: /home/node/app
+      volumes:
+        - ./client/:/home/node/app
+        - ./client/node_modules:/home/node/app/node_modules
+      depends_on:
+        - server
+
         
 volumes:
     pgdata:
     rabbitmq_data:
+    node_modules:

@@ -138,3 +138,7 @@ GitHub.sublime-settings
 
 pgdata
 rabbitmq_data
+
+# ignore all node_modules in subdirectories
+**/node_modules
+
