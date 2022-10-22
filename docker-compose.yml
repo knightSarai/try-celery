@@ -5,7 +5,7 @@ services:
         container_name: server
         build:
           context: ./server
-        command: python manage.py runserver 0.0.0.0:8000
+        command: gunicorn core.wsgi --bind 0.0.0.0:8000 
         volumes:
             - ./server:/usr/src/app/
         ports:
